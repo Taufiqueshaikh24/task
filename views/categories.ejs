@@ -1,0 +1,51 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/categories">Categories</a></li>
+                <li><a href="/products">Products</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h1>Categories</h1>
+        <ul>
+            <% categories.forEach(category => { %>
+                <li>
+                    <a href="/products/category/<%= category.id %>"><%= category.name %></a>
+                    <!-- Delete Category -->
+                    <form action="/categories/<%= category.id %>?_method=DELETE" method="POST" style="display:inline;">
+                        <!-- <input type="hidden" name="_method" value="DELETE"> -->
+                        <button type="submit">Delete</button>
+                    </form>
+                    <!-- Update Category -->
+                    <form action="/categories/<%= category.id %>?_method=PUT" method="POST" style="display:inline;">
+                        <!-- <input type="hidden" name="_method" value="PUT"> -->
+                        <input type="text" name="name" placeholder="New Category Name" required>
+                        <button type="submit">Update</button>
+                    </form>
+                </li>
+            <% }); %>
+        </ul>
+        <h2>Add Category</h2>
+        <form action="/categories" method="POST">
+            <input type="text" name="name" placeholder="Category Name" required>
+            <button type="submit">Add</button>
+        </form>
+    </main>
+    <footer>
+        <p>&copy; 2024 My CRUD Application</p>
+    </footer>
+</body>
+</html>
