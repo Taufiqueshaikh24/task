@@ -1,3 +1,4 @@
+const { response } = require('express');
 const pool = require('../db');  
 
 const getProducts = async (req, res) => {
@@ -13,46 +14,6 @@ const getProducts = async (req, res) => {
 
 
 
-// const getProductsByCategory = async (req, res) => {
-//     try {
-//         const { categoryId } = req.params;
-//         const page = parseInt(req.query.page) || 1;
-//         const limit = parseInt(req.query.limit) || 10;
-//         const offset = (page - 1) * limit;
-
-//         const query = `
-//             SELECT p.id AS productId, p.name AS productName, c.name AS categoryName, p.categoryId, p.price, p.description 
-//             FROM products p 
-//             JOIN categories c ON p.categoryId = c.id 
-//             WHERE p.categoryId = ? 
-//             LIMIT ? OFFSET ?
-//         `;
-//         const [products] = await pool.query(query, [categoryId, limit, offset]);
-
-//         const countQuery = 'SELECT COUNT(*) as total FROM products WHERE categoryId = ?';
-//         const [countResult] = await pool.query(countQuery, [categoryId]);
-//         const totalProducts = countResult[0].total;
-
-//         res.render('products', {
-//             products,
-//             categoryId,
-//             total: totalProducts,
-//             page,
-//             limit
-//         });
-//         // res.status(200).json({
-            
-//         //         categoryId,
-//         //         total: totalProducts,
-//         //         page,
-//         //         limit,
-//         //         products
-//         // })
-//     } catch (err) {
-//         console.error('Error fetching products:', err);
-//         res.status(500).send('Internal server error');
-//     }
-// };
 
 
 
@@ -69,104 +30,80 @@ const getProduct = async (req , res) => {
       }
 }
 
+
+
+
+
+
+
 const createProduct = async (req, res) => {
     try {
-        const { name, categoryId, price, description } = req.body;
+        const { categoryId } = req.params;
+        const { name, price, description } = req.body;
 
-        // Check if categoryId exists
-        const [category] = await pool.query('SELECT * FROM categories WHERE id = ?', [categoryId]);
-        if (category.length === 0 || categoryId > category.length || categoryId < category.length) {
-            return res.status(400).json({ error: 'Category not found' });
+        // Fetch category details
+        const categoryQuery = 'SELECT name FROM categories WHERE id = ?';
+        const [category] = await pool.query(categoryQuery, [categoryId]);
+
+        if (category.length === 0) {
+            return res.status(404).json({ error: 'Category not found' });
         }
 
-        // Insert product
-        const query = `INSERT INTO products (name, categoryId, price, description) VALUES (?, ?, ?, ?)`;
-        const [result] = await pool.query(query, [name, categoryId, price, description]);
+        const categoryName = category[0].name;
 
-        // Fetch the inserted product using the insertId
-        const [product] = await pool.query('SELECT * FROM products WHERE id = ?', [result.insertId]);
+        const query = 'INSERT INTO products (name, categoryId, price, description) VALUES (?, ?, ?, ?)';
+        await pool.query(query, [name, categoryId, price, description]);
 
-        res.status(200).json(product[0]);
+        res.redirect(`/products/category/${categoryId}`);
     } catch (err) {
-        console.error('Error inserting product:', err);
+        console.error('Error adding product:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
-}
+};
+
+
+
+
+
+
+
+
+
 
 
 const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, categoryId, price, description } = req.body;
+        const { name, price, description } = req.body;
+        const { categoryId } = req.query;
 
-        // Initialize an array to hold the parts of the update query
-        let updates = [];
-        let values = [];
+        // Debug logs
+        console.log('Product ID:', id);
+        console.log('Name:', name);
+        console.log('Price:', price);
+        console.log('Description:', description);
+        console.log('Category ID:', categoryId);
 
-        // Check each field and add to the updates array if it exists in the request body
-        if (name !== undefined) {
-            updates.push('name = ?');
-            values.push(name);
-        }
-        if (categoryId !== undefined) {
-            updates.push('categoryId = ?');
-            values.push(categoryId);
-        }
-        if (price !== undefined) {
-            updates.push('price = ?');
-            values.push(price);
-        }
-        if (description !== undefined) {
-            updates.push('description = ?');
-            values.push(description);
+        // Update product query
+        const updateQuery = 'UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?';
+        await pool.query(updateQuery, [name, price, description, id]);
+
+        // Check if the category exists
+        const categoryQuery = 'SELECT id, name FROM categories WHERE id = ?';
+        const [category] = await pool.query(categoryQuery, [categoryId]);
+
+        if (category.length === 0) {
+            return res.status(404).json({ error: 'Category not found' });
         }
 
-        // If there are no updates, return early
-        if (updates.length === 0) {
-            return res.status(400).json({ error: 'No fields to update' });
-        }
-
-        // Add the id to the values array for the WHERE clause
-        values.push(id);
-
-        // Construct the final update query
-        let query = `UPDATE products SET ${updates.join(', ')} WHERE id = ?`;
-        const [result] = await pool.query(query, values);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
-        // Fetch the updated product details
-        const [product] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
-        res.status(200).json(product[0]);
+        const categoryName = category[0].name;
+        // Correct URL redirection
+        res.redirect(`/products/category/${categoryId}?categoryName=${encodeURIComponent(categoryName)}`);
     } catch (err) {
         console.error('Error updating product:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
-}
-
-
-// const updateProduct = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const { name, categoryId, price, description } = req.body;
-        
-//         let query = `UPDATE products SET name = ?, categoryId = ?, price = ?, description = ? WHERE id = ?`;
-//         const [result] = await pool.query(query, [name, categoryId, price, description, id]);
-
-//         if (result.affectedRows === 0) {
-//             return res.status(404).json({ error: 'Product not found' });
-//         }
-
-//         // Fetch the updated product details
-//         const [product] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
-//         res.status(200).json(product[0]);
-//     } catch (err) {
-//         console.error('Error updating product:', err);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// }
+};
 
 
 
@@ -174,101 +111,43 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
+        const { categoryId } = req.query;
 
-        let query = `DELETE FROM products WHERE id = ?`;
-        const [result] = await pool.query(query, [id]);
+        console.log('Product ID:', id);
+        console.log('Category ID:', categoryId);
 
-        if (result.affectedRows === 0) {
+        // Check if the product exists
+        const productQuery = 'SELECT * FROM products WHERE id = ?';
+        const [product] = await pool.query(productQuery, [id]);
+
+        if (product.length === 0) {
+            console.log('Product not found');
             return res.status(404).json({ error: 'Product not found' });
         }
 
-        res.status(200).json({ message: 'Product deleted successfully' });
+        // Delete the product
+        const deleteQuery = 'DELETE FROM products WHERE id = ?';
+        await pool.query(deleteQuery, [id]);
+
+        // Check if the category exists
+        const categoryQuery = 'SELECT id, name FROM categories WHERE id = ?';
+        const [category] = await pool.query(categoryQuery, [categoryId]);
+
+        if (category.length === 0) {
+            console.log('Category not found');
+            return res.status(404).json({ error: 'Category not found' });
+        }
+
+        // Redirect back to the category's product list
+        res.redirect(`/products/category/${categoryId}`);
     } catch (err) {
         console.error('Error deleting product:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
-}
+};
 
 
 
-// const getProductsByCategory = async (req, res) => {
-//     try {
-//         const query = `
-//             SELECT 
-//                 categories.id AS categoryId, 
-//                 categories.name AS categoryName, 
-//                 products.id AS productId, 
-//                 products.name AS productName, 
-//                 products.price, 
-//                 products.description 
-//             FROM products 
-//             JOIN categories ON products.categoryId = categories.id 
-//             ORDER BY categories.name, products.name;
-//         `;
-//         const [rows] = await pool.query(query);
-
-//         // Organize data by category
-//         const result = rows.reduce((acc, row) => {
-//             const { categoryId, categoryName, productId, productName, price, description } = row;
-
-//             if (!acc[categoryName]) {
-//                 acc[categoryName] = {
-//                     categoryId,
-//                     categoryName,
-//                     products: []
-//                 };
-//             }
-
-//             acc[categoryName].products.push({
-//                 productId,
-//                 productName,
-//                 price,
-//                 description
-//             });
-
-//             return acc;
-//         }, {});
-
-//         res.status(200).json(result);
-//     } catch (err) {
-//         console.error('Error fetching products by category:', err);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// };
-
-
-
-
-// const getProductsByCategory = async (req, res) => {
-//     try {
-//         const { categoryId } = req.params; // Extract categoryId from params
-//         const page = parseInt(req.query.page) || 1;
-//         const limit = parseInt(req.query.limit) || 10;
-//         const offset = (page - 1) * limit;
-
-//         const query = `
-//             SELECT 
-//                 p.id, p.name, p.categoryId, c.name as categoryName, p.price, p.description 
-//             FROM 
-//                 products p
-//             JOIN
-//                 categories c ON p.categoryId = c.id
-//             WHERE 
-//                 p.categoryId = ? 
-//             LIMIT ? OFFSET ?
-//         `;
-//         const [products] = await pool.query(query, [categoryId, limit, offset]);
-
-//         const countQuery = 'SELECT COUNT(*) as total FROM products WHERE categoryId = ?';
-//         const [countResult] = await pool.query(countQuery, [categoryId]);
-//         const totalProducts = countResult[0].total;
-
-//         res.render('products', { products, categoryId, total: totalProducts, page, limit }); // Pass categoryId
-//     } catch (err) {
-//         console.error('Error fetching products by category:', err);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// };
 
 
 
@@ -280,7 +159,17 @@ const getProductsByCategory = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
 
-        const query = `
+        // Fetch category details
+        const categoryQuery = 'SELECT name FROM categories WHERE id = ?';
+        const [category] = await pool.query(categoryQuery, [categoryId]);
+
+        if (category.length === 0) {
+            return res.status(404).json({ error: 'Category not found' });
+        }
+
+        const categoryName = category[0].name;
+
+        const productQuery = `
             SELECT 
                 p.id, p.name, p.categoryId, c.name as categoryName, p.price, p.description 
             FROM 
@@ -291,15 +180,38 @@ const getProductsByCategory = async (req, res) => {
                 p.categoryId = ? 
             LIMIT ? OFFSET ?
         `;
-        const [products] = await pool.query(query, [categoryId, limit, offset]);
+        const [products] = await pool.query(productQuery, [categoryId, limit, offset]);
 
         const countQuery = 'SELECT COUNT(*) as total FROM products WHERE categoryId = ?';
         const [countResult] = await pool.query(countQuery, [categoryId]);
         const totalProducts = countResult[0].total;
 
-        res.render('products', { products, categoryId, total: totalProducts, page, limit });
+        res.render('products', { products, categoryName, categoryId, total: totalProducts, page, limit });
     } catch (err) {
         console.error('Error fetching products by category:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+const showUpdateProductForm = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { categoryId } = req.query;
+
+        // Fetch product details
+        const productQuery = 'SELECT * FROM products WHERE id = ?';
+        const [product] = await pool.query(productQuery, [id]);
+
+        if (product.length === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        const productDetails = product[0];
+
+        res.render('updateProduct', { product: productDetails, categoryId });
+    } catch (err) {
+        console.error('Error fetching product for update:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
@@ -308,4 +220,5 @@ const getProductsByCategory = async (req, res) => {
 
 
 
-module.exports = { getProducts , getProduct , createProduct , updateProduct , deleteProduct , getProductsByCategory};
+
+module.exports = { getProducts , getProduct , createProduct , updateProduct ,showUpdateProductForm , deleteProduct , getProductsByCategory};

@@ -59,23 +59,6 @@ const updateCategory = async (req, res) => {
     }
 }
 
-// const deleteCategory = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         let query = `DELETE FROM categories WHERE id = ?`;
-//         const [result] = await pool.query(query, [id]);
-
-//         if (result.affectedRows === 0) {
-//             return res.status(404).json({ error: 'Category not found' });
-//         }
-
-//         res.status(200).json({ message: 'Category deleted successfully' });
-//     } catch (err) {
-//         console.error('Error deleting category:', err);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// }
 
 
 
@@ -116,41 +99,6 @@ const deleteCategoryAndProducts = async (req, res) => {
 
 
 
-// const getProductsByCategory = async (req, res) => {
-//     try {
-//         const { categoryId } = req.params;
-//         const page = parseInt(req.query.page) || 1;
-//         const limit = parseInt(req.query.limit) || 10;
-//         const offset = (page - 1) * limit;
-
-//         const query = `
-//             SELECT 
-//                 * 
-//             FROM 
-//                 products 
-//             WHERE 
-//                 categoryId = ? 
-//             LIMIT ? OFFSET ?
-//         `;
-//         const [products] = await pool.query(query, [categoryId, limit, offset]);
-
-//         const countQuery = 'SELECT COUNT(*) as total FROM products WHERE categoryId = ?';
-//         const [countResult] = await pool.query(countQuery, [categoryId]);
-//         const totalProducts = countResult[0].total;
-        
-//         // res.status(200).json({
-//         //     total: totalProducts,
-//         //     page: page,
-//         //     limit: limit,
-//         //     productCount: products.length,
-//         //     products: products,
-//         // });
-//         res.render('products', { products, categoryId: id });
-//     } catch (err) {
-//         console.error('Error fetching products by category:', err);
-//         res.status(500).json({ error: 'Internal server error' });
-//     }
-// }
 
 
 
@@ -185,9 +133,32 @@ const getProductsByCategory = async (req, res) => {
 
 
 
+const showUpdateCategoryForm = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Fetch category details
+        const categoryQuery = 'SELECT * FROM categories WHERE id = ?';
+        const [category] = await pool.query(categoryQuery, [id]);
+
+        if (category.length === 0) {
+            return res.status(404).json({ error: 'Category not found' });
+        }
+
+        const categoryDetails = category[0];
+
+        res.render('updateCategory', { category: categoryDetails });
+    } catch (err) {
+        console.error('Error fetching category for update:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
 
 
 
 
-module.exports = { addCategory, getCategories, getProductsByCategory ,  deleteCategoryAndProducts ,  updateCategory };
+
+
+
+module.exports = { addCategory, showUpdateCategoryForm , getCategories, getProductsByCategory ,  deleteCategoryAndProducts ,  updateCategory };

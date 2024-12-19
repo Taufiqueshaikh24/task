@@ -1,0 +1,84 @@
+
+.update-button {
+    text-decoration: none;
+    color: white;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  main {
+    padding: 20px;
+  }
+  
+  main h1,
+  main h2 {
+    margin-bottom: 15px;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th,
+  td {
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+  
+  th {
+    text-align: center;
+  }
+  
+  .actions {
+    display: flex; /* Allow buttons to sit side-by-side */
+    justify-content: end; /* Distribute buttons evenly */
+  }
+  
+  .delete-button {
+    background-color: #e74c3c; /* Red */
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin:  0 10px 0 0 ;
+  }
+  
+  .delete-button:hover {
+    background-color: #c0392b;
+  }
+  
+  .update-button {
+    background-color: #2ecc71; /* Dark green */
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .update-button:hover {
+    background-color: #27ae60;
+  }
+
+
+  .addcategory {
+     width: 90%;
+     height: 30px;
+     outline: none;
+  }
+
+  .add-button {
+      height: 35px;
+      background-color: #27ae60;
+      border: 0;
+      color: white;
+      width: 100px;
+  } 

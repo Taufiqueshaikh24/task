@@ -4,57 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/products.css">
+    <script>
+        function showUpdateForm(productId, productName, productPrice, productDescription) {
+            var form = document.getElementById('update-form-' + productId);
+            form.style.display = 'block';
+            var nameInput = form.querySelector('input[name="name"]');
+            var priceInput = form.querySelector('input[name="price"]');
+            var descriptionInput = form.querySelector('textarea[name="description"]');
+            nameInput.value = productName;
+            priceInput.value = productPrice;
+            descriptionInput.value = productDescription;
+        }
+    </script>
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="/categories">Categories</a></li>
-                <li><a href="/products">Products</a></li>
-            </ul>
-        </nav>
-    </header>
     <main>
-        <h1>Products in Category <%= categoryId %></h1>
-        <ul>
-            <% products.forEach(product => { %>
-                <li>
-                    <%= product.id %> - <%= product.name %> - <%= product.categoryId %> - <%= product.categoryName %> - <%= product.price %> - <%= product.description %>
-                    <!-- Delete Product -->
-                    <form action="/products/<%= product.id %>/<%= categoryId %>" method="POST" style="display:inline;">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit">Delete</button>
-                    </form>
-                    <!-- Update Product -->
-                    <form action="/products/<%= product.id %>" method="POST" style="display:inline;">
-                        <input type="hidden" name="_method" value="PUT">
-                        <input type="text" name="name" placeholder="New Product Name" required>
-                        <input type="number" name="price" placeholder="New Price" required>
-                        <textarea name="description" placeholder="New Description" required></textarea>
-                        <button type="submit">Update</button>
-                    </form>
-                </li>
-            <% }); %>
-        </ul>
+        <h1>Products in Category: <%= categoryName %></h1>
+        <% if (products.length === 0) { %>
+            <p style="text-align: center;">No products found</p>
+        <% } else { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% products.forEach(product => { %>
+                        <tr>
+                            <td><%= product.id %></td>
+                            <td><%= product.name %></td>
+                            <td><%= product.price %></td>
+                            <td><%= product.description %></td>
+                            <td>
+                                <!-- Delete Product -->
+                                 <span style="display: flex; justify-content: center; align-items: center; gap: 4px;">
+                                     <form action="/products/<%= product.id %>?_method=DELETE&categoryId=<%= categoryId %>" method="POST" style="display:inline;">
+                                         <button type="submit" class="delete-button">Delete</button>
+                                        </form>
+                                        <!-- Show Update Form Button -->
+                                        <a href="/products/<%= product.id %>/update?categoryId=<%= categoryId %>" class="update-button delete-button">Update</a>
+                                 </span>
+                                <!-- Update Product Form -->
+                                <form id="update-form-<%= product.id %>" action="/products/<%= product.id %>?_method=PUT&categoryId=<%= categoryId %>" method="POST" style="display:none;">
+                                    <input type="hidden" name="_method" value="PUT">
+                                    <input type="text" name="name" placeholder="New Product Name" required>
+                                    <input type="number" name="price" placeholder="New Price" required>
+                                    <textarea name="description" placeholder="New Description" required></textarea>
+                                    <button type="submit">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } %>
         <h2>Add Product</h2>
         <form action="/products/category/<%= categoryId %>" method="POST">
             <input type="text" name="name" placeholder="Product Name" required>
             <input type="number" name="price" placeholder="Price" required>
             <textarea name="description" placeholder="Description" required></textarea>
-            <button type="submit">Add</button>
+            <button type="submit" class="add-button">Add</button>
         </form>
-        <a href="/categories">Back to Categories</a>
-
+        <button style="height: 25px; background-color:#2ecc71; color: white; outline: none; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+            <a href="/categories" style="text-decoration: none; color: white; display: block; height: 100%; width: 100%;">Back to Categories</a>
+        </button>
+        
         <!-- Pagination -->
-        <div>
+        <div class="pagination">
+            <% if (page > 1) { %>
+                <a href="/products/category/<%= categoryId %>?page=<%= page - 1 %>&limit=<%= limit %>" class="pagination-link">&laquo; Previous</a>
+            <% } %>
             <% for (let i = 1; i <= Math.ceil(total / limit); i++) { %>
-                <a href="/products/category/<%= categoryId %>?page=<%= i %>&limit=<%= limit %>"><%= i %></a>
+                <a href="/products/category/<%= categoryId %>?page=<%= i %>&limit=<%= limit %>" class="pagination-link <%= i === page ? 'active' : '' %>"><%= i %></a>
+            <% } %>
+            <% if (page < Math.ceil(total / limit)) { %>
+                <a href="/products/category/<%= categoryId %>?page=<%= page + 1 %>&limit=<%= limit %>" class="pagination-link">Next &raquo;</a>
             <% } %>
         </div>
+        
     </main>
-    <footer>
-        <p>&copy; 2024 My CRUD Application</p>
-    </footer>
+   
 </body>
 </html>
